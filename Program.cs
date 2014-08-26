@@ -26,8 +26,7 @@ namespace DocumentDBTest
         {
             using (var client = new DocumentClient(new Uri(endpoint), authKey))
             {
-                var database = new Database { Id = "ScottsDemoDB" };
-                database = await client.CreateDatabaseAsync(database);
+                var database = await ReadOrCreateDatabase(client, "DavidsDemoDB");
 
                 var collection = new DocumentCollection { Id = "Families" };
                 collection = await client.CreateDocumentCollectionAsync(database.SelfLink, collection);
@@ -59,6 +58,20 @@ namespace DocumentDBTest
                 //cleanup test database
                 await client.DeleteDatabaseAsync(database.SelfLink);
             }
+        }
+
+        private static async Task<Database> ReadOrCreateDatabase(DocumentClient client, string databaseId)
+        {
+            var databases = client.CreateDatabaseQuery()
+                            .Where(db => db.Id == databaseId).ToArray();
+
+            if (databases.Any())
+            {
+                return databases.First();
+            }
+
+            Database database = new Database { Id = databaseId };
+            return await client.CreateDatabaseAsync(database);
         }
     }
 }
